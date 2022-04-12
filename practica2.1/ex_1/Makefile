@@ -1,19 +1,16 @@
-TARGET = program
-CC = gcc
-DEBUG = -g
-CFLAGS = -Wall $(DEBUG) -pthread
-OBJS = ex1.cc ex1.o
-#SOURCES = $(addsuffix .c, $(basename $(OBJS)))
-# HEADERS = mytar.h
+CC = g++
+CFLAGS = -Wall -g -pthread
+
+TARGET = ex1
+OBJS = $(TARGET).o
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS) 
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
 
-#.c.o: 
-#	$(CC) $(CFLAGS) -c  $< -o $@
-
+%.o : %.cc 
+	$(CC) -c $(CFLAGS) $< -o $@
 
 clean: 
 	-rm -f *.o $(TARGET) 
