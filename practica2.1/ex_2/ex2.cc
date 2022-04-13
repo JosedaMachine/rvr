@@ -86,17 +86,16 @@ int main(int argc, char *argv[]){
 
         printf("%d bytes de %s:%s\n",bytes, host, serv);
         
+        bytes = 0;
         //Process message
         switch (buf[0]) {
             case 't':
                 timeinfo = localtime(&rawtime);
                 bytes = strftime (buf,BUF_SIZE,"%I:%M:%S %p.",timeinfo);
-                sendto(socketDesc, buf, bytes, 0, (struct sockaddr *) &cliente, cliente_len);
                 break;
             case 'd':
                 timeinfo = localtime(&rawtime);
                 bytes = strftime (buf,BUF_SIZE,"%F",timeinfo);
-                sendto(socketDesc, buf, bytes, 0, (struct sockaddr *) &cliente, cliente_len);
                 break;
             case 'q':
                 exit = true;
@@ -105,6 +104,10 @@ int main(int argc, char *argv[]){
             default:
                 std::cout << "Comando no soportado " << buf[0] << "\n";
         }
+
+        if(bytes != 0)
+            sendto(socketDesc, buf, bytes, 0,&cliente, cliente_len);
+
     }
     close(socketDesc);
     freeaddrinfo(result);
