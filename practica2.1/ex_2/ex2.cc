@@ -1,17 +1,14 @@
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
 #include <cstring>
 #include <iostream>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
 #define BUF_SIZE 500
-
 
 bool initConnection(const char* host, char* serv, addrinfo hints, addrinfo *result, int* socketDesc){
     //Transalate name to socket addresses
@@ -19,17 +16,17 @@ bool initConnection(const char* host, char* serv, addrinfo hints, addrinfo *resu
 
     if (rc != 0) {
         std::cerr << "Error: getaddrinfo -> " << gai_strerror(rc) << "\n";
-        return -1;
+        return false;
     }
 
     //Open socket with result content. Always 0 to TCP and UDP
     (*socketDesc) = socket(result->ai_family, result->ai_socktype, 0);
 
     //Associate address. Where is going to listen
-    rc = bind((*socketDesc), (struct sockaddr *) result->ai_addr, result->ai_addrlen);
+    rc = bind((*socketDesc), result->ai_addr, result->ai_addrlen);
     if (rc != 0) {
         std::cerr << "Error: bind -> " << gai_strerror(rc) << "\n";
-        return -1;
+        return false;
     }
 
     return true;
@@ -47,6 +44,7 @@ int main(int argc, char *argv[]){
 
     memset(&hints, 0, sizeof(addrinfo));
     memset(&result, 0, sizeof(addrinfo));
+
     hints.ai_flags    = AI_PASSIVE; //Devolver 0.0.0.0
     hints.ai_family   = AF_INET;    // IPv4
     hints.ai_socktype = SOCK_DGRAM;
@@ -54,8 +52,8 @@ int main(int argc, char *argv[]){
     time(&rawtime);
 
     //Initialize connection and listening
-    if(!initConnection(argv[1],argv[2], hints, result, &socketDesc)){
-        std::cerr << "Error: Initiliazation\n";
+    if(!initConnection(argv[1], argv[2], hints, result, &socketDesc)){
+        std::cerr << "Error: Initialization\n";
         return -1;
     }
 
@@ -65,12 +63,12 @@ int main(int argc, char *argv[]){
     char host[NI_MAXHOST], serv[NI_MAXSERV];
     bool exit = false;
 
-
     while (!exit) {
-        //Recive message
+        //Receive message
         int bytes = recvfrom(socketDesc, buf, BUF_SIZE, 0, &cliente, &cliente_len);
         
-        if(bytes == -1) std::cerr << "Error: recvfrom.\n"; 
+        if (bytes == -1) 
+            std::cerr << "Error: recvfrom.\n"; 
     
         buf[bytes]='\0'; 
         
@@ -82,9 +80,10 @@ int main(int argc, char *argv[]){
         }
 
         //No Mesage
-        if(!bytes) continue;      
+        if(!bytes) 
+            continue;      
 
-        printf("%d bytes de %s:%s\n",bytes, host, serv);
+        printf("%d bytes de %s:%s\n", bytes, host, serv);
         
         bytes = 0;
         //Process message
