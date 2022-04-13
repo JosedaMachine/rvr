@@ -10,7 +10,7 @@
 
 #define BUF_SIZE 500
 
-bool initConnection(const char* host, char* serv, addrinfo hints, addrinfo *result, int* socketDesc){
+bool createSocket(const char* host, char* serv, addrinfo hints, addrinfo *result, int* socketDesc){
     //Transalate name to socket addresses
     int rc = getaddrinfo(host, serv, &hints, &result);
 
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
     time(&rawtime);
 
     //Initialize connection and listening
-    if(!initConnection(argv[1], argv[2], hints, result, &socketDesc)){
+    if(!createSocket(argv[1], argv[2], hints, result, &socketDesc)){
         std::cerr << "Error: Initialization\n";
         return -1;
     }
