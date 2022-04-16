@@ -57,7 +57,6 @@ int main(int argc, char *argv[]){
 
     struct sockaddr cliente;
     socklen_t cliente_len = sizeof(cliente);
-    char buf[BUF_SIZE];
     char host[NI_MAXHOST], serv[NI_MAXSERV];
     bool exit = false;
 
@@ -75,12 +74,15 @@ int main(int argc, char *argv[]){
     printf("Conexión desde %s%s\n",host, serv);
 
     while (!exit) {
+        char buf[BUF_SIZE];
+
         int bytes = recv(clientFileDesc, buf, BUF_SIZE, 0);
 
         if(bytes <= 0) {
             exit = true;
             continue;
         }
+        buf[bytes]='\0'; 
 
         error_code = send(clientFileDesc, buf, bytes, 0);
         if(error_code == -1){

@@ -59,11 +59,12 @@ int main(int argc, char *argv[]){
 
     struct sockaddr cliente;
     socklen_t cliente_len = sizeof(cliente);
-    char buf[BUF_SIZE];
     char host[NI_MAXHOST], serv[NI_MAXSERV];
     bool exit = false;
 
     while (!exit) {
+        char buf[BUF_SIZE];
+
         //Receive message
         int bytes = recvfrom(socketDesc, buf, BUF_SIZE, 0, &cliente, &cliente_len);
         
