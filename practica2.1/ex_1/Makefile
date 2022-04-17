@@ -1,13 +1,14 @@
 CC = g++
 CFLAGS = -Wall -g -pthread
 
+OUTPUT = gai
 TARGET = ex1
 OBJS = $(TARGET).o
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS) 
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
+	$(CC) $(CFLAGS) -o $(OUTPUT).out $(OBJS)
 
 %.o : %.cc 
 	$(CC) -c $(CFLAGS) $< -o $@

@@ -1,13 +1,14 @@
 CC = g++
 CFLAGS = -Wall -g -pthread
 
+OUTPUT = echo_server_threading
 TARGET = ex7
 OBJS = $(TARGET).o
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS) 
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
+	$(CC) $(CFLAGS) -o $(OUTPUT).out $(OBJS)
 
 %.o : %.cc MessageThread.cc
 	$(CC) -c $(CFLAGS) $< -o $@

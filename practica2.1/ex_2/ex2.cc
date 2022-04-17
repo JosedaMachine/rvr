@@ -10,20 +10,23 @@
 
 #define BUF_SIZE 500
 
-bool createSocket(const char* host, char* serv, addrinfo hints, addrinfo *result, int* socketDesc){
-    //Transalate name to socket addresses
+bool init_connection(const char* host, char* serv, addrinfo hints, addrinfo *result, int* socket_dc) {
+    // translate name to socket addresses
     int rc = getaddrinfo(host, serv, &hints, &result);
-
     if (rc != 0) {
         std::cerr << "Error: getaddrinfo -> " << gai_strerror(rc) << "\n";
         return false;
     }
 
-    //Open socket with result content. Always 0 to TCP and UDP
-    (*socketDesc) = socket(result->ai_family, result->ai_socktype, 0);
+    // open socket with result content. Always 0 to TCP and UDP
+    (*socket_dc) = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if ((*socket_dc) == -1) {
+        std::cerr << "Error: failure on socket open.\n";
+        return false;
+    }
 
-    //Associate address. Where is going to listen
-    rc = bind((*socketDesc), result->ai_addr, result->ai_addrlen);
+    // associate address. Where is going to listen
+    rc = bind((*socket_dc), result->ai_addr, result->ai_addrlen);
     if (rc != 0) {
         std::cerr << "Error: bind -> " << gai_strerror(rc) << "\n";
         return false;
@@ -32,9 +35,9 @@ bool createSocket(const char* host, char* serv, addrinfo hints, addrinfo *result
     return true;
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
     
-    int error_code, socketDesc;
+    int error_code, socket_dc;
     
     time_t rawtime;
     struct tm * timeinfo;
@@ -45,57 +48,58 @@ int main(int argc, char *argv[]){
     memset(&hints, 0, sizeof(addrinfo));
     memset(&result, 0, sizeof(addrinfo));
 
-    hints.ai_flags    = AI_PASSIVE; //Devolver 0.0.0.0
+    hints.ai_flags    = AI_PASSIVE; // 0.0.0.0
     hints.ai_family   = AF_INET;    // IPv4
-    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_socktype = SOCK_DGRAM; // UDP
 
     time(&rawtime);
 
-    //Initialize connection and listening
-    if(!createSocket(argv[1], argv[2], hints, result, &socketDesc)){
-        std::cerr << "Error: Initialization\n";
+    // initialize connection
+    if(!init_connection(argv[1], argv[2], hints, result, &socket_dc)) {
+        std::cerr << "Error: failed connection init.\n";
         return -1;
     }
+    freeaddrinfo(result);
 
-    struct sockaddr cliente;
-    socklen_t cliente_len = sizeof(cliente);
+    // client data
+    struct sockaddr client;
+    socklen_t client_length = sizeof(client);
     char host[NI_MAXHOST], serv[NI_MAXSERV];
-    bool exit = false;
 
-    while (!exit) {
+    // while the connection is up
+    bool exit = false;
+    while(!exit) {
         char buf[BUF_SIZE];
 
-        //Receive message
-        int bytes = recvfrom(socketDesc, buf, BUF_SIZE, 0, &cliente, &cliente_len);
+        // receive message
+        int bytes = recvfrom(socket_dc, buf, BUF_SIZE, 0, &client, &client_length);
         
-        if (bytes == -1) 
+        if (bytes == -1) // error receiving message
             std::cerr << "Error: recvfrom.\n"; 
-    
+        else if(!bytes) // no message
+            continue;      
+
         buf[bytes]='\0'; 
         
-        //Who's is sending message
-        error_code = getnameinfo(&cliente, cliente_len, host, NI_MAXHOST, serv, NI_MAXSERV, NI_NUMERICHOST| NI_NUMERICSERV);
+        // get client information
+        error_code = getnameinfo(&client, client_length, host, NI_MAXHOST, serv, NI_MAXSERV, NI_NUMERICHOST| NI_NUMERICSERV);
         if (error_code != 0) {
             std::cerr << "Error: getnameinfo -> " << gai_strerror(error_code) << "\n";
             return -1;
         }
 
-        //No Mesage
-        if(!bytes) 
-            continue;      
-
-        printf("%d bytes de %s:%s\n", bytes, host, serv);
+        std::cout << bytes << " bytes de " << host << ":" << serv << "\n";
         
+        // process message
         bytes = 0;
-        //Process message
         switch (buf[0]) {
             case 't':
                 timeinfo = localtime(&rawtime);
-                bytes = strftime (buf,BUF_SIZE,"%I:%M:%S %p.",timeinfo);
+                bytes = strftime(buf, BUF_SIZE, "%I:%M:%S %p\n", timeinfo);
                 break;
             case 'd':
                 timeinfo = localtime(&rawtime);
-                bytes = strftime (buf,BUF_SIZE,"%F",timeinfo);
+                bytes = strftime(buf, BUF_SIZE, "%F\n", timeinfo);
                 break;
             case 'q':
                 exit = true;
@@ -105,11 +109,13 @@ int main(int argc, char *argv[]){
                 std::cout << "Comando no soportado " << buf[0] << "\n";
         }
 
+        // send returning message if 
         if(bytes != 0)
-            sendto(socketDesc, buf, bytes, 0,&cliente, cliente_len);
-
+            sendto(socket_dc, buf, bytes, 0,&client, client_length);
     }
-    close(socketDesc);
-    freeaddrinfo(result);
+
+    // close socket connection
+    close(socket_dc);
+
     return 0;
 }
