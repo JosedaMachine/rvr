@@ -1,4 +1,5 @@
 #include <time.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -10,6 +11,7 @@ public:
       sockDesc = sockdesc_;
       time(&rawtime);
     }
+
     ~MessageThread(){
         std::cout << "Thread: " << std::this_thread::get_id() << "closed.\n";
     }
@@ -28,7 +30,7 @@ public:
         int bytes = recvfrom(sockDesc, buf, BUF_SIZE, 0, &cliente, &cliente_len);
         
         if (bytes == -1) 
-            std::cerr << "Error: Thread :" << std::this_thread::get_id() << " ->" << "recvfrom.\n"; 
+            std::cerr << "Error: Thread " << std::this_thread::get_id() << ": -> recvfrom.\n"; 
     
         buf[bytes]='\0'; 
         

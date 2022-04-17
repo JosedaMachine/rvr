@@ -3,14 +3,15 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <cstring>
 #include <iostream>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
+#include <thread>
 
-#define BUF_SIZE 500
-#define BACKLOG 5
+#include "MessageThread.cc"
+
+#define BUF_SIZE 80
+#define BACKLOG 16
 
 bool createSocket(const char* host, char* serv, addrinfo hints, addrinfo *result, int* socketDesc){
     //Transalate name to socket addresses
@@ -18,7 +19,7 @@ bool createSocket(const char* host, char* serv, addrinfo hints, addrinfo *result
 
     if (rc != 0) {
         std::cerr << "Error: getaddrinfo -> " << gai_strerror(rc) << "\n";
-        return -1;
+        return false;
     }
 
     //Open socket with result content. Always 0 to TCP and UDP
@@ -28,24 +29,26 @@ bool createSocket(const char* host, char* serv, addrinfo hints, addrinfo *result
     rc = bind((*socketDesc), (struct sockaddr *) result->ai_addr, result->ai_addrlen);
     if (rc != 0) {
         std::cerr << "Error: bind -> " << gai_strerror(rc) << "\n";
-        return -1;
+        return false;
     }
 
-    listen(*socketDesc, BACKLOG);
+    if(listen(*socketDesc, BACKLOG) == -1){
+        std::cerr << "Error: listen\n";
+		return false;
+    }
 
     return true;
 }
 
 int main(int argc, char *argv[]){
-    
-    int error_code, socketDesc;
-    
+    int socketDesc;
+
     addrinfo hints;
     addrinfo* result;
 
     memset(&hints, 0, sizeof(addrinfo));
     memset(&result, 0, sizeof(addrinfo));
-    
+
     hints.ai_flags    = AI_PASSIVE; //Devolver 0.0.0.0
     hints.ai_family   = AF_INET;    // IPv4
     hints.ai_socktype = SOCK_STREAM;
@@ -61,38 +64,25 @@ int main(int argc, char *argv[]){
     char host[NI_MAXHOST], serv[NI_MAXSERV];
     bool exit = false;
 
-    //Waits for a new connection
-    //Gets connection-established socket. Block Call
-    int clientFileDesc = accept(socketDesc, (struct sockaddr*)&cliente, &cliente_len);
+    while(!exit){
+        int sockDescClient = accept(socketDesc, &cliente, &cliente_len);
+        std::cout << sockDescClient << "\n";
+        if(sockDescClient == -1) continue;
 
-    if(clientFileDesc == -1){
-        std::cerr << "Error: accept -> " << gai_strerror(clientFileDesc) << "\n";
-        return -1;
+        getnameinfo(&cliente, cliente_len, host, NI_MAXHOST, serv,
+					NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
+        std::cout << "Connected from " << host << " " << serv << '\n';
+
+        MessageThread *mt = new MessageThread(sockDescClient, host, serv);
+        std::thread([&mt](){
+            mt->do_message();
+            delete mt;
+        }).detach();
     }
-
-    //Information of the new connection
-    getnameinfo((struct sockaddr *) &cliente, cliente_len, host, NI_MAXHOST, serv, NI_MAXSERV, NI_NUMERICHOST| NI_NUMERICSERV);
-    printf("Conexión desde %s%s\n",host, serv);
-
-    while (!exit) {
-        char buf[BUF_SIZE];
-
-        int bytes = recv(clientFileDesc, buf, BUF_SIZE, 0);
-
-        if(bytes <= 0) {
-            exit = true;
-            continue;
-        }
-        buf[bytes]='\0'; 
-
-        error_code = send(clientFileDesc, buf, bytes, 0);
-        if(error_code == -1){
-            exit = true;
-            continue;
-        }
-    }
-    printf("Conexión terminada.\n");
+    
+    //close all threads
     close(socketDesc);
     freeaddrinfo(result);
+    std::cout << "Connection closed.\n";
     return 0;
 }

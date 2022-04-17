@@ -51,13 +51,14 @@ int main(int argc, char *argv[])
     hints.ai_socktype = SOCK_STREAM;
 
     //Initialize connection and listening
-    if (!createSocket(argv[1], argv[2], hints, result, &socketDesc)){
+    if (!createSocket(argv[1], argv[2], hints, result, &socketDesc)) {
         std::cerr << "Error: Initialization\n";
         return -1;
     }
 
     while (true) {
         char buf[BUF_SIZE];
+
         fgets(buf, BUF_SIZE, stdin);
         int buf_size = strlen(buf);
         if (strlen(buf) == 2 && buf[0] == 'Q')
@@ -67,7 +68,8 @@ int main(int argc, char *argv[])
         if (bytes <= 0)
             break;
 
-        char response[BUF_SIZE]; memset(response, 0, BUF_SIZE);
+        char response[BUF_SIZE];
+        memset(response, 0, BUF_SIZE);
         bytes = recv(socketDesc, response, BUF_SIZE, 0);
 
         if (bytes <= 0)
