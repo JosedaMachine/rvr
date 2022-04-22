@@ -50,7 +50,7 @@ public:
             buf[bytes]='\0'; 
 
             // artificial wait between receptions
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
             // get client information
             error_code = getnameinfo(&client, client_length, host, NI_MAXHOST, serv, NI_MAXSERV, NI_NUMERICHOST| NI_NUMERICSERV);
