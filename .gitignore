@@ -31,5 +31,8 @@
 *.out
 *.app
 
+# Binaries
+*.bin
+
 # vscode
 .vscode
