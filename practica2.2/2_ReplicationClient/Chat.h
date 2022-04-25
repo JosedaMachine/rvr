@@ -7,6 +7,11 @@
 #include "Serializable.h"
 #include "Socket.h"
 
+#define NICK_SIZE sizeof(char) * 8
+#define MESSAGE_DATA_SIZE sizeof(char) * 80
+
+#define MESSAGE_SIZE NICK_SIZE + MESSAGE_DATA_SIZE + sizeof(uint8_t)
+
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
@@ -27,8 +32,6 @@
 class ChatMessage: public Serializable
 {
 public:
-    static const size_t MESSAGE_SIZE = sizeof(char) * 88 + sizeof(uint8_t);
-
     enum MessageType
     {
         LOGIN   = 0,
@@ -36,20 +39,20 @@ public:
         LOGOUT  = 2
     };
 
-    ChatMessage(){};
+    ChatMessage() {};
 
-    ChatMessage(const std::string& n, const std::string& m):nick(n),message(m){};
+    ChatMessage(const std::string& n, const std::string& m) : nick(n), message(m) {};
 
     void to_bin();
 
-    int from_bin(char * bobj);
+    int from_bin(char* bobj);
 
+public:
     uint8_t type;
 
     std::string nick;
     std::string message;
 };
-
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
@@ -82,7 +85,6 @@ private:
      */
     Socket socket;
 };
-
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
@@ -134,4 +136,4 @@ private:
      */
     std::string nick;
 };
-
+// -----------------------------------------------------------------------------
