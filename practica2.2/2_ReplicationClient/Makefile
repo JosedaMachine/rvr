@@ -11,10 +11,10 @@ LIBS = -lpthread
 
 all: chat_server.out chat_client.out
 
-chat_server.out: $(OBJ) ChatServer.o
+chat_server.out: $(OBJ) main_chat_server.o
 	g++ -o $@ $^ $(CFLAGS) $(LIBS)
 
-chat_client.out: $(OBJ) ChatClient.o
+chat_client.out: $(OBJ) main_chat_client.o
 	g++ -o $@ $^ $(CFLAGS) $(LIBS)
 
 

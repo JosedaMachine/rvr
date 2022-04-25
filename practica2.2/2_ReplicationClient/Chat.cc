@@ -60,7 +60,7 @@ void ChatServer::do_messages() {
                 while(it != clients.end() && *(*it) != *messageSock) it++;
 
                 if(it != clients.end()) clients.erase(it);
-                else printf("Invalid socket: %d", messageSock);
+                else std::cout << "Invalid socket: " << messageSock << "\n";
                 
                 break;
                 }
