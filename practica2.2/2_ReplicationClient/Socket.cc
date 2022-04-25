@@ -8,6 +8,14 @@ Socket::Socket(const char * address, const char * port):sd(-1) {
     // translate name to socket addresses
     addrinfo hints; 
     addrinfo *result;
+
+    memset(&hints, 0, sizeof(addrinfo));
+    memset(&result, 0, sizeof(addrinfo));
+
+    hints.ai_flags    = AI_PASSIVE; // 0.0.0.0
+    hints.ai_family   = AF_INET;    // IPv4
+    hints.ai_socktype = SOCK_DGRAM; // UDP
+
     int rc = getaddrinfo(address, port, &hints, &result);
     if (rc != 0) {
         const char* error_gai = gai_strerror(rc);
@@ -77,6 +85,10 @@ bool operator== (const Socket &s1, const Socket &s2)
     return sock1->sin_family == sock2->sin_family && 
         sock1->sin_addr.s_addr == sock2->sin_addr.s_addr &&
         sock1->sin_port == sock2->sin_port;
+};
+
+bool operator!= (const Socket &s1, const Socket &s2){
+    return (s1 == s2); 
 };
 
 std::ostream& operator<<(std::ostream& os, const Socket& s)

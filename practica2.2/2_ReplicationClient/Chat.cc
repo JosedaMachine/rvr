@@ -39,20 +39,9 @@ int ChatMessage::from_bin(char * bobj)
 }
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void ChatServer::do_messages()
-{
-    while (true)
-    {
-        /*
-         * NOTA: los clientes están definidos con "smart pointers", es necesario
-         * crear un unique_ptr con el objeto socket recibido y usar std::move
-         * para añadirlo al vector
-         */
-
-        //Recibir Mensajes en y en función del tipo de mensaje
-        // - LOGIN: Añadir al vector clients
-        // - LOGOUT: Eliminar del vector clients
-        // - MESSAGE: Reenviar el mensaje a todos los clientes (menos el emisor)
+void ChatServer::do_messages() {
+    while (true) {
+        
     }
 }
 // -----------------------------------------------------------------------------
