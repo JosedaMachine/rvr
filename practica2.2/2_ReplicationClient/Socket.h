@@ -5,14 +5,19 @@
 #include <sys/types.h>
 #include <netdb.h>
 
+#include <ostream>
 #include <iostream>
 #include <stdexcept>
 
-#include <ostream>
+/**
+ * El máximo teórico de un mensaje UDP es 2^16, del que hay que
+ * descontar la cabecera UDP e IP (con las posibles opciones). Se debe
+ * utilizar esta constante para definir buffers de recepción.
+ */
+#define MAX_MESSAGE_SIZE 32768
 
 // -----------------------------------------------------------------------------
 // Definiciones adelantadas
-// -----------------------------------------------------------------------------
 class Socket;
 class Serializable;
 
@@ -25,30 +30,20 @@ class Serializable;
  */
 bool operator== (const Socket &s1, const Socket &s2);
 
-/**
- *  Imprime la dirección y puerto en número con el formato:"dirección_ip:puerto"
- */
+// Imprime la dirección y puerto en número con el formato: "dirección_ip:puerto"
 std::ostream& operator<<(std::ostream& os, const Socket& dt);
-// -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
 
 /**
  * Clase base que representa el extremo local de una conexión UDP. Tiene la lógica
- * para inicializar un sockect y la descripción binaria del extremo
+ * para inicializar un socket y la descripción binaria del extremo
  *   - dirección IP
  *   - puerto
  */
 class Socket
 {
 public:
-    /**
-     * El máximo teórico de un mensaje UDP es 2^16, del que hay que
-     * descontar la cabecera UDP e IP (con las posibles opciones). Se debe
-     * utilizar esta constante para definir buffers de recepción.
-     */
-    static const int32_t MAX_MESSAGE_SIZE = 32768;
-
     /**
      *  Construye el socket UDP con la dirección y puerto dados. Esta función
      *  usara getaddrinfo para obtener la representación binaria de dirección y
@@ -59,15 +54,12 @@ public:
      *    @param address cadena que representa la dirección o nombre
      *    @param port cadena que representa el puerto o nombre del servicio
      */
-    Socket(const char * address, const char * port);
+    Socket(const char* address, const char* port);
 
-    /**
-     *  Inicializa un Socket copiando los parámetros del socket
-     */
-    Socket(struct sockaddr * _sa, socklen_t _sa_len):sd(-1), sa(*_sa),
-        sa_len(_sa_len){};
+    // Inicializa un Socket copiando los parámetros del socket
+    Socket(struct sockaddr* _sa, socklen_t _sa_len) : sd(-1), sa(*_sa), sa_len(_sa_len) {};
 
-    virtual ~Socket(){};
+    virtual ~Socket() {};
 
     /**
      *  Recibe un mensaje de aplicación
@@ -80,11 +72,11 @@ public:
      *
      *    @return 0 en caso de éxito o -1 si error (cerrar conexión)
      */
-    int recv(Serializable &obj, Socket * &sock);
+    int recv(Serializable &obj, Socket* &sock);
 
-    int recv(Serializable &obj) //Descarta los datos del otro extremo
-    {
-        Socket * s = 0;
+    // Descarta los datos del otro extremo
+    int recv(Serializable &obj) {
+        Socket* s = 0;
 
         return recv(obj, s);
     }
@@ -100,28 +92,20 @@ public:
      */
     int send(Serializable& obj, const Socket& sock);
 
-    /**
-     *  Enlaza el descriptor del socket a la dirección y puerto
-     */
-    int bind()
-    {
+    // Enlaza el descriptor del socket a la dirección y puerto
+    int bind() {
         return ::bind(sd, (const struct sockaddr *) &sa, sa_len);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Socket& dt);
-
-    friend bool operator== (const Socket &s1, const Socket &s2);
+    friend bool operator==(const Socket &s1, const Socket &s2);
 
 protected:
 
-    /**
-     *  Descriptor del socket
-     */
+    // Descriptor del socket
     int sd;
 
-    /**
-     *  Representación binaria del extremo, usada por servidor y cliente
-     */
+    // Representación binaria del extremo, usada por servidor y cliente
     struct sockaddr sa;
     socklen_t       sa_len;
 };
