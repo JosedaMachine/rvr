@@ -62,8 +62,7 @@ public:
 class ChatServer
 {
 public:
-    ChatServer(const char * s, const char * p): socket(s, p)
-    {
+    ChatServer(const char * s, const char * p): socket(s, p){
         socket.bind();
     };
 
@@ -97,7 +96,8 @@ public:
      * @param p puerto del servidor
      * @param n nick del usuario
      */
-    ChatClient(const char * s, const char * p, const char * n) : socket(s, p), nick(n) {};
+    ChatClient(const char * s, const char * p, const char * n) : socket(s, p), nick(n) {
+    };
 
     // Envía el mensaje de login al servidor
     void login();

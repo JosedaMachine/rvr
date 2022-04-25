@@ -35,12 +35,12 @@ Socket::Socket(const char * address, const char * port):sd(-1) {
     sa = (struct sockaddr)*(result->ai_addr);
     sa_len = (result->ai_addrlen);
 
-    rc = bind();
-    if (rc != 0) {
-        const char* error_gai = gai_strerror(rc);
-        std::string error = "Error: bind -> " + (std::string)error_gai +  "\n"; 
-        throw error;
-    }
+    // rc = bind();
+    // if (rc != 0) {
+    //     const char* error_gai = gai_strerror(rc);
+    //     std::string error = "Error: bind -> " + (std::string)error_gai +  "\n"; 
+    //     throw error;
+    // }
 }
 
 int Socket::recv(Serializable &obj, Socket* &sock)
@@ -57,7 +57,7 @@ int Socket::recv(Serializable &obj, Socket* &sock)
 
     if(sock != 0)
         sock = new Socket(&sa, sa_len);
-
+    
     obj.from_bin(buffer);
 
     return 0;
@@ -67,7 +67,6 @@ int Socket::send(Serializable& obj, const Socket& sock)
 {
     //Serializar el objeto
     obj.to_bin();
-
     //Enviar el objeto binario a sock usando el socket sd
     int error_code = sendto(sd, obj.data(), obj.size(), 0, &sock.sa, sock.sa_len);
 
@@ -88,7 +87,7 @@ bool operator== (const Socket &s1, const Socket &s2)
 };
 
 bool operator!= (const Socket &s1, const Socket &s2){
-    return (s1 == s2); 
+    return !(s1 == s2); 
 };
 
 std::ostream& operator<<(std::ostream& os, const Socket& s)

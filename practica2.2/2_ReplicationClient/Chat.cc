@@ -13,10 +13,11 @@ void ChatMessage::to_bin()
     memcpy(tmp, &type, sizeof(uint8_t));
     tmp += sizeof(uint8_t);
 
-    memcpy(tmp, &nick, NICK_SIZE);
+    memcpy(tmp, nick.c_str(), NICK_SIZE);
     tmp += NICK_SIZE;
 
-    memcpy(tmp, &message, MESSAGE_DATA_SIZE);
+    memcpy(tmp, message.c_str(), MESSAGE_DATA_SIZE);
+
 }
 
 int ChatMessage::from_bin(char * bobj)
@@ -30,10 +31,10 @@ int ChatMessage::from_bin(char * bobj)
     memcpy(&type, tmp, sizeof(uint8_t));
     tmp += sizeof(uint8_t);
 
-    memcpy(&nick, tmp, NICK_SIZE);
+    nick = tmp;
     tmp += NICK_SIZE;
 
-    memcpy(&message, tmp, MESSAGE_DATA_SIZE);
+    message = tmp;
 
     return 0;
 }
@@ -51,11 +52,15 @@ void ChatServer::do_messages() {
          */
         switch (message.type) {
             case ChatMessage::LOGIN:{// - LOGIN: Añadir al vector clients
+                printf("LOG IN:");
+                std::cout << message.nick << "\n";
                 auto messagePtr = std::make_unique<Socket>(*messageSock); messageSock = nullptr;
                 clients.push_back(std::move(messagePtr));
                 break;
                 }
             case ChatMessage::LOGOUT:{ // - LOGOUT: Eliminar del vector clients
+                printf("LOG OUT:");
+                std::cout << message.nick << "\n";
                 auto it = clients.begin();
                 while(it != clients.end() && *(*it) != *messageSock) it++;
 
@@ -78,7 +83,6 @@ void ChatServer::do_messages() {
 void ChatClient::login()
 {
     std::string msg;
-
     ChatMessage login_message(nick, msg);
     login_message.type = ChatMessage::LOGIN;
 
@@ -109,11 +113,9 @@ void ChatClient::input_thread()
     }
 }
 
-void ChatClient::net_thread()
-{
+void ChatClient::net_thread(){
     ChatMessage net_message;
     Socket* net_socket = new Socket(socket);
-
     while(true) {
         // Recibir Mensajes de red
         socket.recv(net_message, net_socket);
