@@ -88,9 +88,7 @@ private:
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
-/**
- *  Clase para el cliente de chat
- */
+// Clase para el cliente de chat
 class ChatClient
 {
 public:
@@ -99,17 +97,12 @@ public:
      * @param p puerto del servidor
      * @param n nick del usuario
      */
-    ChatClient(const char * s, const char * p, const char * n):socket(s, p),
-        nick(n){};
+    ChatClient(const char * s, const char * p, const char * n) : socket(s, p), nick(n) {};
 
-    /**
-     *  Envía el mensaje de login al servidor
-     */
+    // Envía el mensaje de login al servidor
     void login();
 
-    /**
-     *  Envía el mensaje de logout al servidor
-     */
+    // Envía el mensaje de logout al servidor
     void logout();
 
     /**
@@ -125,15 +118,10 @@ public:
     void net_thread();
 
 private:
-
-    /**
-     * Socket para comunicar con el servidor
-     */
+    // Socket para comunicar con el servidor
     Socket socket;
 
-    /**
-     * Nick del usuario
-     */
+    // Nick del usuario
     std::string nick;
 };
 // -----------------------------------------------------------------------------
