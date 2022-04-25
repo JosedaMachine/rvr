@@ -3,10 +3,37 @@
 #include "Serializable.h"
 #include "Socket.h"
 
-Socket::Socket(const char * address, const char * port):sd(-1)
-{
+Socket::Socket(const char * address, const char * port):sd(-1) {
     //Construir un socket de tipo AF_INET y SOCK_DGRAM usando getaddrinfo.
     //Con el resultado inicializar los miembros sd, sa y sa_len de la clase
+    // translate name to socket addresses
+    addrinfo hints; 
+    addrinfo *result;
+    int rc = getaddrinfo(address, port, &hints, &result);
+    if (rc != 0) {
+        const char* error_gai = gai_strerror(rc);
+        std::string error = "Error: getaddrinfo -> " + (std::string)error_gai +  "\n"; 
+        throw error;
+    }
+
+    // open socket with result content. Always 0 to TCP and UDP
+    sd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (sd == -1) {
+        std::string error = "Error: failure on socket open.\n"; 
+        throw error;
+    }
+
+    // associate address. Where is going to listen
+    sa = (struct sockaddr)*(result->ai_addr);
+    sa_len = (result->ai_addrlen);
+
+    rc = bind();
+    if (rc != 0) {
+        const char* error_gai = gai_strerror(rc);
+        std::string error = "Error: bind -> " + (std::string)error_gai +  "\n"; 
+        throw error;
+    }
+    
 }
 
 int Socket::recv(Serializable &obj, Socket * &sock)
