@@ -17,7 +17,6 @@ void ChatMessage::to_bin()
     tmp += NICK_SIZE;
 
     memcpy(tmp, message.c_str(), MESSAGE_DATA_SIZE);
-
 }
 
 int ChatMessage::from_bin(char * bobj)
@@ -42,39 +41,46 @@ int ChatMessage::from_bin(char * bobj)
 // -----------------------------------------------------------------------------
 void ChatServer::do_messages() {
     while (true) {
-        ChatMessage message;
-        Socket* messageSock = new Socket(socket);
-        socket.recv(message, messageSock);
         /*
          * NOTA: los clientes están definidos con "smart pointers", es necesario
          * crear un unique_ptr con el objeto socket recibido y usar std::move
          * para añadirlo al vector
          */
-        switch (message.type) {
-            case ChatMessage::LOGIN:{// - LOGIN: Añadir al vector clients
-                printf("LOG IN:");
-                std::cout << message.nick << "\n";
-                auto messagePtr = std::make_unique<Socket>(*messageSock); messageSock = nullptr;
-                clients.push_back(std::move(messagePtr));
-                break;
-                }
-            case ChatMessage::LOGOUT:{ // - LOGOUT: Eliminar del vector clients
-                printf("LOG OUT:");
-                std::cout << message.nick << "\n";
-                auto it = clients.begin();
-                while(it != clients.end() && *(*it) != *messageSock) it++;
+        ChatMessage client_message;
+        Socket* client_socket = new Socket(socket);
+        socket.recv(client_message, client_socket);
 
-                if(it != clients.end()) clients.erase(it);
-                else std::cout << "Invalid socket: " << messageSock << "\n";
-                
-                break;
-                }
-            case ChatMessage::MESSAGE:{ // - MESSAGE: Reenviar el mensaje a todos los clientes (menos el emisor)
-                for(auto it = clients.begin(); it != clients.end(); it++)
-                    if(*(*it) != *messageSock)
-                        socket.send(message, **it);
-                break;
-                }
+        switch (client_message.type) {
+        case ChatMessage::LOGIN: { // - LOGIN: Añadir al vector clients
+            printf("LOG IN: ");
+            std::cout << client_message.nick << "\n";
+            
+            auto message_ptr = std::make_unique<Socket>(*client_socket); client_socket = nullptr;
+            clients.push_back(std::move(message_ptr));
+
+            break;
+        }
+        case ChatMessage::LOGOUT: { // - LOGOUT: Eliminar del vector clients
+            printf("LOG OUT: ");
+            std::cout << client_message.nick << "\n";
+
+            auto clients_it = clients.begin();
+            while(clients_it != clients.end() && *(*clients_it) != *client_socket) clients_it++;
+
+            if(clients_it != clients.end()) clients.erase(clients_it);
+            else std::cout << "Invalid socket: " << client_socket << "\n";
+            
+            break;
+        }
+        case ChatMessage::MESSAGE: { // - MESSAGE: Reenviar el mensaje a todos los clientes (menos el emisor)
+            printf("MESSAGE: ");
+            std::cout << client_message.nick << " -> " << client_message.message << "\n";
+
+            for(auto clients_it = clients.begin(); clients_it != clients.end(); clients_it++)
+                if(*(*clients_it) != *client_socket)
+                    socket.send(client_message, **clients_it);
+            break;
+        }
         }
     }
 }
@@ -106,11 +112,19 @@ void ChatClient::input_thread()
         std::string msg;
         std::getline(std::cin, msg);
 
+        std::transform(msg.begin(), msg.end(), msg.begin(),
+            [](unsigned char c){ return std::tolower(c); });
+
+        if(msg == "logout" || msg == "log out" || msg == "q")
+            break;
+
         // Enviar al servidor usando socket
         ChatMessage input_message(nick, msg);
         input_message.type = ChatMessage::MESSAGE;
         socket.send(input_message, socket);
     }
+
+    logout();
 }
 
 void ChatClient::net_thread(){
